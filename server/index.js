@@ -21,7 +21,11 @@ app.use(express.json());
 
 // ✅ Routes
 const barRoutes = require("./routes/barRoutes");
+const topBarRoutes = require("./routes/topBarRoutes");
+
 app.use("/api/barvisits", barRoutes);
+app.use("/api/topbars", topBarRoutes);
+
 
 // ✅ Check if port is available and kill existing process if needed
 function killPortProcess(port) {
@@ -45,14 +49,14 @@ async function startServer() {
     try {
         // Kill any existing process on the port
         await killPortProcess(PORT);
-        
+
         // Connect to MongoDB
         await mongoose.connect(process.env.MONGO_URI);
         console.log("✅ MongoDB connected");
-        
+
         // Start the server
         const server = app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
-        
+
         server.on('error', (err) => {
             if (err.code === 'EADDRINUSE') {
                 console.error(`❌ Port ${PORT} is already in use. Please kill the process or use a different port.`);

@@ -2,6 +2,10 @@
 
 This is the backend server for the Bar Tracker MVP. It provides APIs for storing and retrieving bar visit logs using Express and MongoDB.
 
+## Insert Data to Seed
+
+curl -X POST http://localhost:3001/api/topbars/seed
+
 ---
 
 ## ✅ Features
