@@ -12,11 +12,11 @@ const PORT = process.env.PORT || 3001;
 // ✅ CORS middleware with preflight support
 app.use(cors({
     origin: "http://localhost:5173",
-    methods: ["GET", "POST", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type"],
+    credentials: true
 }));
 
-app.options("*", cors()); // Explicit preflight handler
 app.use(express.json());
 
 // ✅ Routes

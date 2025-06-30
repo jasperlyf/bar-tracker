@@ -1,49 +1,24 @@
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import BarForm from "./components/BarForm";
-import VisitTable from "./components/VisitTable";
-import TopBars from "./components/TopBars";
-
-function HomePage() {
-  return (
-    <>
-      <BarForm />
-      <VisitTable />
-      <div className="mt-6">
-        <Link
-          to="/top100"
-          className="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          🌏 View Top 100 Bars
-        </Link>
-      </div>
-    </>
-  );
-}
-
-function TopBarsPage() {
-  return (
-    <>
-      <TopBars />
-      <div className="mt-6">
-        <Link
-          to="/"
-          className="inline-block bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800"
-        >
-          🔙 Back to Home
-        </Link>
-      </div>
-    </>
-  );
-}
+import Home from "./pages/Home";
+import VisitPage from "./pages/VisitPage";
+import Top100Bars from "./pages/Top100Bars";
 
 function App() {
   return (
     <Router>
-      <div className="max-w-6xl mx-auto mt-10 px-4">
-        <h1 className="text-2xl font-bold mb-6">🍸 Bar Tracker</h1>
+      <div className="max-w-7xl mx-auto px-6 py-8 font-serif text-gray-800">
+        <header className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">🍸 Bar Tracker</h1>
+          <nav className="space-x-4">
+            <Link to="/" className="hover:underline">Home</Link>
+            <Link to="/visits" className="hover:underline">My Visits</Link>
+            <Link to="/top100" className="hover:underline">Top 100 Bars</Link>
+          </nav>
+        </header>
         <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/top100" element={<TopBarsPage />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/visits" element={<VisitPage />} />
+          <Route path="/top100" element={<Top100Bars />} />
         </Routes>
       </div>
     </Router>
