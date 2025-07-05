@@ -3,207 +3,350 @@ import axios from "axios";
 
 const VisitTable = () => {
   const [visits, setVisits] = useState([]);
+  const [topBars, setTopBars] = useState([]);
+  const [barPopup, setBarPopup] = useState(null);
   const [editingVisit, setEditingVisit] = useState(null);
   const [formData, setFormData] = useState({});
+  const [showMore, setShowMore] = useState(false);
+
   const [newVisit, setNewVisit] = useState({
     bar: "",
     address: "",
     country: "",
     date: "",
-    drink: "",
-    people: [],
-    ratings: { vibe: 0, service: 0, drinks: 0 }
+    ratings: { vibe: 3, service: 3, drinks: 3 },
   });
 
   useEffect(() => {
     fetchVisits();
+    axios
+      .get("http://localhost:3001/api/topbars")
+      .then((res) => setTopBars(res.data));
   }, []);
 
   const fetchVisits = async () => {
-    try {
-      const res = await axios.get("http://localhost:3001/api/barvisits");
-      setVisits(res.data);
-    } catch (err) {
-      console.error("❌ Failed to load visits:", err);
-    }
+    const res = await axios.get("http://localhost:3001/api/barvisits");
+    setVisits(res.data);
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm("Delete this visit?")) return;
-    try {
-      await axios.delete(`http://localhost:3001/api/barvisits/${id}`);
-      fetchVisits();
-    } catch (err) {
-      console.error("❌ Failed to delete visit:", err);
-    }
-  };
-
-  const handleEditClick = (visit) => {
-    setEditingVisit(visit._id);
-    setFormData({
-      ...visit,
-      people: visit.people || [],
-      ratings: visit.ratings || { vibe: 0, service: 0, drinks: 0 }
-    });
-  };
-
-  const handleUpdate = async () => {
-    try {
-      const payload = {
-        bar: formData.bar,
-        address: formData.address,
-        country: formData.country,
-        date: formData.date,
-        drink: formData.drink,
-        people: formData.people || [],
-        ratings: formData.ratings || {}
-      };
-
-      await axios.put(`http://localhost:3001/api/barvisits/${editingVisit}`, payload);
-      fetchVisits();
-      setEditingVisit(null);
-    } catch (err) {
-      console.error("❌ Failed to update visit:", err.response?.data || err.message);
+  const handleBarSelect = (barName) => {
+    const match = topBars.find((b) => b.name === barName);
+    if (match) {
+      setNewVisit({
+        ...newVisit,
+        bar: match.name,
+        address: match.address,
+        country: match.country,
+      });
+    } else {
+      setNewVisit({
+        ...newVisit,
+        bar: barName,
+        address: "",
+        country: "",
+      });
     }
   };
 
   const handleAddVisit = async () => {
-    try {
-      const payload = {
-        ...newVisit,
-        people: newVisit.people || [],
-        ratings: newVisit.ratings || { vibe: 0, service: 0, drinks: 0 }
-      };
+    if (!newVisit.bar || !newVisit.date) {
+      alert("Please enter both bar name and date.");
+      return;
+    }
 
+    const payload = {
+      bar: newVisit.bar,
+      date: newVisit.date,
+      ratings: newVisit.ratings,
+      ...(newVisit.address && { address: newVisit.address }),
+      ...(newVisit.country && { country: newVisit.country }),
+    };
+
+    try {
       await axios.post("http://localhost:3001/api/barvisits", payload);
       setNewVisit({
         bar: "",
         address: "",
         country: "",
         date: "",
-        drink: "",
-        people: [],
-        ratings: { vibe: 0, service: 0, drinks: 0 }
+        ratings: { vibe: 3, service: 3, drinks: 3 },
       });
+      setShowMore(false);
       fetchVisits();
     } catch (err) {
-      console.error("❌ Failed to add visit:", err.response?.data || err.message);
+      console.error(
+        "❌ Failed to add visit:",
+        err.response?.data || err.message
+      );
+      alert("Error adding visit. Check console for details.");
     }
   };
 
-  return (
-    <div className="overflow-x-auto mt-8">
-      <h2 className="text-xl font-semibold mb-4">📝 Bar Visits</h2>
+  const handleDelete = async (id) => {
+    if (confirm("Delete this visit?")) {
+      await axios.delete(`http://localhost:3001/api/barvisits/${id}`);
+      fetchVisits();
+    }
+  };
 
-      <div className="mb-6 border p-4 rounded bg-gray-50">
-        <h3 className="font-semibold mb-2">Add New Visit</h3>
-        <div className="grid grid-cols-2 gap-2">
-          <input placeholder="Bar" value={newVisit.bar} onChange={e => setNewVisit({ ...newVisit, bar: e.target.value })} />
-          <input placeholder="Address" value={newVisit.address} onChange={e => setNewVisit({ ...newVisit, address: e.target.value })} />
-          <input placeholder="Country" value={newVisit.country} onChange={e => setNewVisit({ ...newVisit, country: e.target.value })} />
-          <input placeholder="Date" value={newVisit.date} onChange={e => setNewVisit({ ...newVisit, date: e.target.value })} />
-          <input placeholder="Drink" value={newVisit.drink} onChange={e => setNewVisit({ ...newVisit, drink: e.target.value })} />
-          <input placeholder="People (comma separated)" value={newVisit.people.join(", ")} onChange={e => setNewVisit({ ...newVisit, people: e.target.value.split(",").map(p => p.trim()) })} />
-          <input type="number" placeholder="Vibe" value={newVisit.ratings.vibe} onChange={e => setNewVisit({ ...newVisit, ratings: { ...newVisit.ratings, vibe: Number(e.target.value) } })} />
-          <input type="number" placeholder="Service" value={newVisit.ratings.service} onChange={e => setNewVisit({ ...newVisit, ratings: { ...newVisit.ratings, service: Number(e.target.value) } })} />
-          <input type="number" placeholder="Drinks" value={newVisit.ratings.drinks} onChange={e => setNewVisit({ ...newVisit, ratings: { ...newVisit.ratings, drinks: Number(e.target.value) } })} />
+  const handleEditClick = (visit) => {
+    setEditingVisit(visit._id);
+    setFormData({ ...visit });
+  };
+
+  const handleUpdate = async () => {
+    const payload = {
+      ...formData,
+      ratings: formData.ratings || { vibe: 3, service: 3, drinks: 3 },
+    };
+
+    try {
+      await axios.put(
+        `http://localhost:3001/api/barvisits/${editingVisit}`,
+        payload
+      );
+      setEditingVisit(null);
+      fetchVisits();
+    } catch (err) {
+      console.error("❌ Update failed:", err);
+    }
+  };
+
+  const renderStars = (n) => "⭐".repeat(n || 0);
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-3xl font-bold">📝 Bar Visits</h2>
+
+      {/* Quick Add */}
+      <div className="bg-gray-50 border rounded p-4 mb-6 shadow-sm">
+        <h3 className="text-md font-medium mb-3">➕ Quick Add</h3>
+
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <label className="block text-xs mb-1">Bar</label>
+            <input
+              list="bar-options"
+              placeholder="Bar name"
+              className="border rounded px-2 py-1 w-full"
+              value={newVisit.bar}
+              onChange={(e) => handleBarSelect(e.target.value)}
+            />
+            <datalist id="bar-options">
+              {topBars.map((b, idx) => (
+                <option key={idx} value={b.name} />
+              ))}
+            </datalist>
+          </div>
+          <div>
+            <label className="block text-xs mb-1">Date</label>
+            <input
+              type="date"
+              className="border rounded px-2 py-1 w-full"
+              value={newVisit.date}
+              onChange={(e) =>
+                setNewVisit({ ...newVisit, date: e.target.value })
+              }
+            />
+          </div>
         </div>
-        <button className="mt-2 bg-blue-600 text-white px-4 py-1 rounded" onClick={handleAddVisit}>Add Visit</button>
+
+        {showMore && (
+          <div className="mt-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <label className="block text-xs mb-1">Address</label>
+                <input
+                  className="border rounded px-2 py-1 w-full"
+                  value={newVisit.address}
+                  readOnly
+                />
+              </div>
+              <div>
+                <label className="block text-xs mb-1">Country</label>
+                <input
+                  className="border rounded px-2 py-1 w-full"
+                  value={newVisit.country}
+                  readOnly
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3 text-sm">
+              {["vibe", "service", "drinks"].map((field) => (
+                <div key={field}>
+                  <label className="block text-xs mb-1 capitalize">
+                    {field}
+                  </label>
+                  <select
+                    className="border rounded px-2 py-1 w-full"
+                    value={newVisit.ratings[field]}
+                    onChange={(e) =>
+                      setNewVisit({
+                        ...newVisit,
+                        ratings: {
+                          ...newVisit.ratings,
+                          [field]: Number(e.target.value),
+                        },
+                      })
+                    }
+                  >
+                    {[1, 2, 3, 4, 5].map((num) => (
+                      <option key={num} value={num}>
+                        {num} ⭐
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between mt-4">
+          <button
+            onClick={() => setShowMore((prev) => !prev)}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            {showMore ? "Hide More Options" : "Show More Options"}
+          </button>
+          <button
+            onClick={handleAddVisit}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Add Visit
+          </button>
+        </div>
       </div>
 
-      <table className="w-full table-auto border border-gray-300">
-        <thead>
-          <tr className="bg-gray-100">
+      {/* Visit Table */}
+      <table className="w-full text-sm border border-gray-300">
+        <thead className="bg-gray-100">
+          <tr>
             <th className="px-3 py-2 text-left">Bar</th>
-            <th className="px-3 py-2 text-left">Address</th>
-            <th className="px-3 py-2 text-left">Country</th>
             <th className="px-3 py-2 text-left">Date</th>
-            <th className="px-3 py-2 text-left">Drink</th>
-            <th className="px-3 py-2 text-left">People</th>
-            <th className="px-3 py-2 text-left">Rating</th>
+            <th className="px-3 py-2 text-left">Vibe</th>
+            <th className="px-3 py-2 text-left">Service</th>
+            <th className="px-3 py-2 text-left">Drinks</th>
             <th className="px-3 py-2 text-left">Actions</th>
           </tr>
         </thead>
         <tbody>
-          {visits.map(visit => (
+          {visits.map((visit) => (
             <tr key={visit._id} className="border-t">
               <td className="px-3 py-2">
-                {editingVisit === visit._id ? (
-                  <input value={formData.bar} onChange={e => setFormData({ ...formData, bar: e.target.value })} />
-                ) : visit.bar}
+                <button
+                  onClick={() => setBarPopup(visit)}
+                  className="text-blue-600 hover:underline"
+                >
+                  {visit.bar}
+                </button>
+              </td>
+              <td className="px-3 py-2">{visit.date}</td>
+              <td className="px-3 py-2">{renderStars(visit.ratings?.vibe)}</td>
+              <td className="px-3 py-2">
+                {renderStars(visit.ratings?.service)}
               </td>
               <td className="px-3 py-2">
-                {editingVisit === visit._id ? (
-                  <input value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
-                ) : visit.address}
-              </td>
-              <td className="px-3 py-2">
-                {editingVisit === visit._id ? (
-                  <input value={formData.country} onChange={e => setFormData({ ...formData, country: e.target.value })} />
-                ) : visit.country}
-              </td>
-              <td className="px-3 py-2">
-                {editingVisit === visit._id ? (
-                  <input value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
-                ) : visit.date}
-              </td>
-              <td className="px-3 py-2">
-                {editingVisit === visit._id ? (
-                  <input value={formData.drink || ''} onChange={e => setFormData({ ...formData, drink: e.target.value })} />
-                ) : visit.drink || '-'}
-              </td>
-              <td className="px-3 py-2">
-                {editingVisit === visit._id ? (
-                  <input
-                    value={formData.people?.join(', ') || ''}
-                    onChange={e => setFormData({ ...formData, people: e.target.value.split(',').map(s => s.trim()) })}
-                  />
-                ) : visit.people?.join(", ") || '-'}
-              </td>
-              <td className="px-3 py-2">
-                {editingVisit === visit._id ? (
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      placeholder="Vibe"
-                      value={formData.ratings?.vibe || ''}
-                      onChange={e => setFormData({ ...formData, ratings: { ...formData.ratings, vibe: Number(e.target.value) } })}
-                      className="w-12 border px-1"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Service"
-                      value={formData.ratings?.service || ''}
-                      onChange={e => setFormData({ ...formData, ratings: { ...formData.ratings, service: Number(e.target.value) } })}
-                      className="w-12 border px-1"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Drinks"
-                      value={formData.ratings?.drinks || ''}
-                      onChange={e => setFormData({ ...formData, ratings: { ...formData.ratings, drinks: Number(e.target.value) } })}
-                      className="w-12 border px-1"
-                    />
-                  </div>
-                ) : visit.ratings ? `V: ${visit.ratings.vibe}, S: ${visit.ratings.service}, D: ${visit.ratings.drinks}` : "-"}
+                {renderStars(visit.ratings?.drinks)}
               </td>
               <td className="px-3 py-2 space-x-2">
-                {editingVisit === visit._id ? (
-                  <>
-                    <button onClick={handleUpdate} className="text-sm text-blue-600 hover:underline">Save</button>
-                    <button onClick={() => setEditingVisit(null)} className="text-sm text-gray-500 hover:underline">Cancel</button>
-                  </>
-                ) : (
-                  <>
-                    <button onClick={() => handleEditClick(visit)} className="text-sm text-blue-600 hover:underline">Edit</button>
-                    <button onClick={() => handleDelete(visit._id)} className="text-sm text-red-600 hover:underline">Delete</button>
-                  </>
-                )}
+                <button onClick={() => handleEditClick(visit)} title="Edit">
+                  ✏️
+                </button>
+                <button onClick={() => handleDelete(visit._id)} title="Delete">
+                  ❌
+                </button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      {/* Bar Details Popup */}
+      {barPopup && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <div className="bg-white p-6 rounded-lg shadow max-w-sm w-full space-y-2">
+            <h3 className="text-xl font-semibold">{barPopup.bar}</h3>
+            <p className="text-sm text-gray-600">{barPopup.address}</p>
+            <p className="text-sm text-gray-600">{barPopup.country}</p>
+            <p className="text-sm text-gray-700">
+              Vibe: {renderStars(barPopup.ratings?.vibe)} <br />
+              Service: {renderStars(barPopup.ratings?.service)} <br />
+              Drinks: {renderStars(barPopup.ratings?.drinks)}
+            </p>
+            <div className="text-right">
+              <button
+                onClick={() => setBarPopup(null)}
+                className="text-sm text-blue-600 hover:underline"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Visit Modal */}
+      {editingVisit && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <div className="bg-white p-6 rounded-lg shadow max-w-sm w-full space-y-4">
+            <h3 className="text-lg font-semibold">✏️ Edit Visit</h3>
+            <div>
+              <label className="block text-xs mb-1">Date</label>
+              <input
+                type="date"
+                className="w-full border px-2 py-1 rounded"
+                value={formData.date}
+                onChange={(e) =>
+                  setFormData({ ...formData, date: e.target.value })
+                }
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {["vibe", "service", "drinks"].map((field) => (
+                <div key={field}>
+                  <label className="block text-xs mb-1 capitalize">
+                    {field}
+                  </label>
+                  <select
+                    className="border rounded px-2 py-1 w-full"
+                    value={formData.ratings?.[field] || 3}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        ratings: {
+                          ...formData.ratings,
+                          [field]: Number(e.target.value),
+                        },
+                      })
+                    }
+                  >
+                    {[1, 2, 3, 4, 5].map((num) => (
+                      <option key={num} value={num}>
+                        {num} ⭐
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setEditingVisit(null)}
+                className="text-sm text-gray-600 hover:underline"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdate}
+                className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

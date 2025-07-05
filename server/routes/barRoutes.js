@@ -23,12 +23,14 @@ router.get("/top-rated", async (req, res) => {
                     avgVibe: { $avg: "$ratings.vibe" },
                     avgService: { $avg: "$ratings.service" },
                     avgDrinks: { $avg: "$ratings.drinks" },
+                    country: { $first: "$country" },
                 },
             },
             {
                 $project: {
                     bar: "$_id",
                     count: 1,
+                    country: 1,
                     avgRating: {
                         $avg: ["$avgVibe", "$avgService", "$avgDrinks"]
                     },

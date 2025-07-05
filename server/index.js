@@ -22,9 +22,11 @@ app.use(express.json());
 // ✅ Routes
 const barRoutes = require("./routes/barRoutes");
 const topBarRoutes = require("./routes/topBarRoutes");
+const myListRoutes = require("./routes/myListRoutes");
 
 app.use("/api/barvisits", barRoutes);
 app.use("/api/topbars", topBarRoutes);
+app.use("/api/mylist", myListRoutes);
 
 
 // ✅ Check if port is available and kill existing process if needed

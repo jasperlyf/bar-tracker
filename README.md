@@ -1,113 +1,118 @@
-# 📦 Bar Tracker – Backend API (MVP Version)
+# Bar Tracker
 
-This is the backend server for the Bar Tracker MVP. It provides APIs for storing and retrieving bar visit logs using Express and MongoDB.
-
-## Insert Data to Seed
-
-curl -X POST http://localhost:3001/api/topbars/seed
+Bar Tracker is a personal app designed to log, rate, and explore bars across Asia and beyond. Whether you're checking off the Top 100 Bars list or tracking your own experiences, this app helps organize your journey with ease.
 
 ---
 
-## ✅ Features
+## MVP Features (June 2025)
 
-- Log a bar visit with:
-  - Bar name
-  - Location
-  - Date
-  - Cost
-  - Ratings: Vibe, Service, Drinks (1–5)
-  - People you went with
-  - Optional: Drinks you had
-- Fetch all visits (to render chart, list, filter, etc.)
+### 1. Home Page
+
+- Displays top-rated bars based on personal rating data (average of vibe, service, drinks).
+- Shows most visited bars based on frequency of visits.
+- Allows filtering by country to narrow down the top-rated view.
+- Dynamic bar images using Unsplash for visual presentation.
 
 ---
 
-## 🛠️ Tech Stack
+### 2. My Visits Page
 
-- **Backend**: Node.js + Express
-- **Database**: MongoDB Atlas
-- **Data format**: JSON
-
----
-
-## 🔌 MongoDB Schema (barVisit.js)
-
-```js
-const mongoose = require("mongoose");
-
-const barVisitSchema = new mongoose.Schema({
-  bar: { type: String, required: true },
-  location: { type: String, required: true },
-  date: { type: Date, required: true },
-  drink: { type: String }, // optional
-  cost: { type: Number, required: true },
-  people: [{ type: String }],
-  rating: {
-    vibe: { type: Number, min: 1, max: 5 },
-    service: { type: Number, min: 1, max: 5 },
-    drinks: { type: Number, min: 1, max: 5 },
-  },
-});
-
-module.exports = mongoose.model("BarVisit", barVisitSchema);
-```
+- Add new bar visit with the following fields:
+  - Bar name (with autocomplete from Top 100 list)
+  - Address (auto-filled if matched)
+  - Country (auto-filled if matched)
+  - Date of visit
+  - Rating (vibe, service, drinks — 1–5)
+- View all visit logs in a clean sortable/filterable table.
+- Support full CRUD operations (edit, delete).
+- Filter by country for now (more filters like date, rating will come after MVP).
+- Rating input with dropdowns for usability.
+- Future: Include visual analytics (charts, trends) to understand visit behavior and preferences.
 
 ---
 
-## 🚀 API Endpoints
+### 3. My List Page
 
-### POST `/api/barvisits`
-
-Create a new bar visit log
-
-**Body:**
-
-```json
-{
-  "bar": "Atlas Bar",
-  "location": "Singapore",
-  "date": "2025-06-22",
-  "drink": "Negroni",
-  "cost": 25,
-  "people": ["John", "Alice"],
-  "rating": {
-    "vibe": 4,
-    "service": 5,
-    "drinks": 5
-  }
-}
-```
-
-### GET `/api/barvisits`
-
-Fetch all bar visit logs
+- Dedicated page for bookmarked bars the user wants to visit.
+- Users can bookmark bars directly from the Top 100 Bars page.
+- Each bookmarked bar is saved to the list.
+- Future: Allow manual additions and more organization (e.g., categories, notes).
 
 ---
 
-## 🌱 Setup
+### 4. Top 100 Bars Page
 
-1. Create `.env`:
+- Displays curated list of the Top 100 Bars in Asia.
+- Shows whether the user has visited each bar.
+- Includes:
+  - Visit count
+  - Last visited date
+  - Average rating summary
+- Each bar has a "bookmark" button to add it to the "My List" page.
 
-```
-PORT=5000
-MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/bartracker
-```
+---
 
-2. Install dependencies:
+## Features Planned After MVP
+
+### UI + UX Enhancements
+
+- Rating via stars, emojis, or sliders
+- Better layout for adding/editing forms
+- Mobile responsiveness and dark mode
+
+### Filters + Autocomplete
+
+- Smart autocomplete for bars outside of Top 100
+- Filters by rating, date, city, bar name
+
+### Analytics + Insights
+
+- Charts showing:
+  - Ratings by city/country
+  - Frequency of visits
+  - Personal trends over time
+
+### User System
+
+- Authentication with JWT
+- Public/private profiles
+- Cross-device sync
+
+### Community & Social
+
+- Public bar reviews
+- Shared lists
+- Leaderboard (most bars visited)
+
+---
+
+## Tech Stack
+
+| Area     | Tech                                        |
+| -------- | ------------------------------------------- |
+| Frontend | React, Tailwind CSS                         |
+| Backend  | Node.js, Express                            |
+| Database | MongoDB Atlas                               |
+| Hosting  | Render (backend), Vercel (frontend planned) |
+| Tools    | Axios, React Router DOM                     |
+
+---
+
+## Getting Started
 
 ```bash
-npm install express mongoose cors dotenv
-```
+# Clone this repo
+git clone https://github.com/your-username/bar-tracker.git
 
-3. Start server:
+# Install dependencies
+cd server && npm install
+cd ../client && npm install
 
-```bash
-node index.js
+# Run backend
+cd ../server && npm run dev
+
+# Run frontend
+cd ../client && npm run dev
 ```
 
 ---
-
-## 📌 Notes
-
-- No user accounts yet — this is a personal-only MVP
-- Future version will support authentication and multi-user features
